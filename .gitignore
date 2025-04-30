@@ -1,0 +1,18 @@
+# Ambiente virtual
+venv/
+.env/
+
+# Bytecode Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.swp
+
+# Diretórios de teste e cache de ferramentas
+.pytest_cache/
+.mypy_cache/
+coverage/
