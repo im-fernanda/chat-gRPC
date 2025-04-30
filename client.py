@@ -8,8 +8,8 @@ from datetime import datetime
 import proto.chat_pb2 as chat_pb2
 import proto.chat_pb2_grpc as chat_pb2_grpc
 
-address = "localhost"
-port = 50051
+address = "0.tcp.sa.ngrok.io"
+port = 18412
 class ClienteChat:
     def __init__(self, nome_usuario, exibir_mensagem_callback):
         self.nome_usuario = nome_usuario
