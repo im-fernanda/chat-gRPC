@@ -1,70 +1,120 @@
 import grpc
 import threading
-import time
+import time, uuid
+import tkinter as tk
+from tkinter import scrolledtext, simpledialog
 from datetime import datetime
 
-import proto.chat_pb2 as chat
-import proto.chat_pb2_grpc as rpc
+import proto.chat_pb2 as chat_pb2
+import proto.chat_pb2_grpc as chat_pb2_grpc
 
+address = "localhost"
+port = 50051
+class ClienteChat:
+    def __init__(self, nome_usuario, exibir_mensagem_callback):
+        self.nome_usuario = nome_usuario
+        self.exibir_mensagem_callback = exibir_mensagem_callback
+        self.canal = grpc.insecure_channel(address + ":" + str(port))
+        self.stub = chat_pb2_grpc.ChatServiceStub(self.canal)
+        self.fila_envio = []
+        self.ativo = True
+        self.client_id = str(uuid.uuid4())
 
-def get_current_timestamp():
-    return int(datetime.now().timestamp())
+    def gerar_mensagens(self):
+        while self.ativo:
+            if self.fila_envio:
+                mensagem = self.fila_envio.pop(0)
+                yield mensagem
+            else:
+                time.sleep(0.1)
 
-
-class Client:
-    def __init__(self, username):
-        self.username = username
-        self.channel = grpc.insecure_channel("localhost:50051")
-        self.stub = rpc.ChatServiceStub(self.channel)
-        self.stop_event = threading.Event()
-
-    def message_generator(self):
-        while not self.stop_event.is_set():
+    def iniciar_chat(self):
+        def receber_mensagens():
             try:
-                message = input()
-                if message.lower() == "/sair":
-                    self.stop_event.set()
-                    break
+                for resposta in self.stub.Chat(self.gerar_mensagens()):
+                    horario = datetime.fromtimestamp(resposta.timestamp).strftime(
+                        "%H:%M:%S"
+                    )
+                    # Verifica se a mensagem é do próprio usuário
+                    if resposta.client_id == self.client_id:
+                        remetente = resposta.username + " (você)"
+                    else:
+                        remetente = resposta.username
 
-                yield chat.ChatMessage(
-                    username=self.username,
-                    message=message,
-                    timestamp=get_current_timestamp(),
-                )
-            except KeyboardInterrupt:
-                self.stop_event.set()
-                break
+                    self.exibir_mensagem_callback(
+                        f"[{horario}] {remetente}: {resposta.message}"
+                    )
+            except grpc.RpcError as e:
+                self.exibir_mensagem_callback(f"Erro na conexão: {e}")
 
-    def listen_for_messages(self):
-        responses = self.stub.Chat(self.message_generator())
+        threading.Thread(target=receber_mensagens, daemon=True).start()
 
-        try:
-            for response in responses:
-                if response.username != self.username:
-                    print(f"\n[{response.username}] {response.message}")
-        except grpc.RpcError as e:
-            print("Conexão encerrada.")
-        finally:
-            self.stop_event.set()
+    def enviar_mensagem(self, texto):
+        mensagem = chat_pb2.ChatMessage(
+            username=self.nome_usuario,
+            message=texto,
+            timestamp=int(time.time()),
+            client_id=self.client_id
+        )
+        self.fila_envio.append(mensagem)
 
-    def start(self):
-        print(
-            f"{self.username} entrou no chat. Digite mensagens ou '/sair' para sair.\n"
+    def parar(self):
+        self.ativo = False
+        self.canal.close()
+
+
+class InterfaceChat:
+    def __init__(self, root):
+        root.withdraw()
+        self.nome_usuario = simpledialog.askstring(
+            "Nome de Usuário", "Digite seu nome de usuário:", parent=root
         )
 
-        # Thread para escutar mensagens do servidor
-        listen_thread = threading.Thread(target=self.listen_for_messages)
-        listen_thread.start()
+        if not self.nome_usuario:
+            self.root.destroy()
+            return
 
-        # Espera o encerramento da thread principal (input)
-        while not self.stop_event.is_set():
-            time.sleep(0.1)
+        root.deiconify()
+        self.root = root
+        self.root.title("Chat com gRPC")
 
-        print("Saindo do chat...")
-        self.channel.close()
+        self.area_chat = scrolledtext.ScrolledText(
+            root, wrap=tk.WORD, state="disabled", width=50, height=20
+        )
+        self.area_chat.pack(padx=10, pady=10)
+
+        self.entrada_mensagem = tk.Entry(root, width=40)
+        self.entrada_mensagem.pack(side=tk.LEFT, padx=(10, 0), pady=(0, 10))
+        self.entrada_mensagem.bind("<Return>", self.enviar_mensagem)
+
+        self.botao_enviar = tk.Button(root, text="Enviar", command=self.enviar_mensagem)
+        self.botao_enviar.pack(side=tk.LEFT, padx=(5, 10), pady=(0, 10))
+
+    
+
+        self.cliente = ClienteChat(self.nome_usuario, self.exibir_mensagem)
+        self.cliente.iniciar_chat()
+
+        self.root.protocol("WM_DELETE_WINDOW", self.fechar)
+
+    def exibir_mensagem(self, mensagem):
+        self.area_chat.configure(state="normal")
+        self.area_chat.insert(tk.END, mensagem + "\n")
+        self.area_chat.configure(state="disabled")
+        self.area_chat.yview(tk.END)
+
+    def enviar_mensagem(self, evento=None):
+        texto = self.entrada_mensagem.get()
+        if texto:
+            self.cliente.enviar_mensagem(texto)
+            self.entrada_mensagem.delete(0, tk.END)
+
+    def fechar(self):
+        self.cliente.parar()
+        self.root.destroy()
 
 
 if __name__ == "__main__":
-    nome = input("Digite seu nome de usuário: ")
-    client = Client(nome)
-    client.start()
+    root = tk.Tk()
+    interface = InterfaceChat(root)
+    root.mainloop()

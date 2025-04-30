@@ -7,7 +7,7 @@ import proto.chat_pb2 as chat
 import proto.chat_pb2_grpc as rpc
 
 clientes = []
-
+historico_mensagens = []
 
 class ServicoChat(rpc.ChatServiceServicer):
 
@@ -19,18 +19,23 @@ class ServicoChat(rpc.ChatServiceServicer):
         fila_cliente = []
         clientes.append(fila_cliente)
 
+        # Envia o histórico para o cliente assim que ele se conectar
+        for mensagem in historico_mensagens:
+            fila_cliente.append(mensagem)
+
         def enviar_mensagens():
             try:
                 for mensagem in request_iterator:
+                    historico_mensagens.append(mensagem)
                     for fila in clientes:
                         fila.append(mensagem)
-                    print("[{}] {}".format(mensagem.username, mensagem.message))
+                    print("[{}] {}".format(mensagem.username, mensagem.message, mensagem.client_id))
             except grpc.RpcError as e:
                 print("Cliente desconectado: {}".format(e))
                 clientes.remove(fila_cliente)
 
         threading.Thread(target=enviar_mensagens, daemon=True).start()
-        
+
         # Para cada cliente, um loop infinito é iniciado (no próprio thread gerenciado do gRPC)
         while True:
             if fila_cliente:
