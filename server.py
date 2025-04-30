@@ -6,45 +6,41 @@ import threading
 import proto.chat_pb2 as chat
 import proto.chat_pb2_grpc as rpc
 
-clients = []
+clientes = []
 
 
-class ChatService(rpc.ChatServiceServicer):
+class ServicoChat(rpc.ChatServiceServicer):
 
     def Chat(self, request_iterator, context):
-        """
-        Esta é uma chamada do tipo de fluxo de resposta. Isso significa que o servidor pode continuar enviando mensagens
-        Todo cliente abre essa conexão e espera o servidor enviar novas mensagens
-        """
-        client_queue = []
-        clients.append(client_queue)
+        fila_cliente = []
+        clientes.append(fila_cliente)
 
-        def send_messages():
-            for message in request_iterator:
-                for queue in clients:
-                    queue.append(message)
-            print("[{}] {}".format(message.name, message.message))
-        threading.Thread(target=send_messages).start()
+        def enviar_mensagens():
+            try:
+                for mensagem in request_iterator:
+                    for fila in clientes:
+                        fila.append(mensagem)
+                    print("[{}] {}".format(mensagem.username, mensagem.message))
+            except grpc.RpcError as e:
+                print("Cliente desconectado: {}".format(e))
+                clientes.remove(fila_cliente)
 
-        # Para cada cliente, um loop infinito é iniciado (no próprio thread gerenciado do gRPC)
+        threading.Thread(target=enviar_mensagens, daemon=True).start()
+
         while True:
-            if client_queue:
-                yield client_queue.pop(0)
+            if fila_cliente:
+                yield fila_cliente.pop(0)
             time.sleep(0.1)
 
 
-def start_server():
-    # Workers é a quantidade de threads que podem ser abertos ao mesmo tempo.
-    # Se tiver 10 clientes conectados, então mais clientes não são capazes de se conectar ao servidor.
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10)) # Cria um servidor gRPC
-    rpc.add_ChatServiceServicer_to_server(
-        ChatService(), server
-    )  # registra a classe que implementa o serviço gRPC (no caso, ChatService) no servidor.
-    server.add_insecure_port("[::]:50051")
-    server.start()  # começa a escutar as requisições
+def iniciar_servidor():
+    servidor = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    rpc.add_ChatServiceServicer_to_server(ServicoChat(), servidor)
+    servidor.add_insecure_port("[::]:50051")
+    servidor.start()
     print("Servidor rodando em :50051")
-    server.wait_for_termination()
+    servidor.wait_for_termination()
 
 
 if __name__ == "__main__":
-    start_server()
+    iniciar_servidor()
