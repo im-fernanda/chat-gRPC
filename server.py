@@ -23,7 +23,7 @@ class ChatService(rpc.ChatServiceServicer):
             for message in request_iterator:
                 for queue in clients:
                     queue.append(message)
-            print("[{}] {}".format(queue.name, queue.message))
+            print("[{}] {}".format(message.name, message.message))
         threading.Thread(target=send_messages).start()
 
         # Para cada cliente, um loop infinito é iniciado (no próprio thread gerenciado do gRPC)
@@ -33,7 +33,7 @@ class ChatService(rpc.ChatServiceServicer):
             time.sleep(0.1)
 
 
-def server():
+def start_server():
     # Workers é a quantidade de threads que podem ser abertos ao mesmo tempo.
     # Se tiver 10 clientes conectados, então mais clientes não são capazes de se conectar ao servidor.
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10)) # Cria um servidor gRPC
@@ -47,4 +47,4 @@ def server():
 
 
 if __name__ == "__main__":
-    server()
+    start_server()
