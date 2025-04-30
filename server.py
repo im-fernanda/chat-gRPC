@@ -3,7 +3,6 @@ from concurrent import futures
 import time
 import threading
 
-import proto.chat_pb2 as chat
 import proto.chat_pb2_grpc as rpc
 
 clientes = []
@@ -11,7 +10,7 @@ historico_mensagens = []
 
 class ServicoChat(rpc.ChatServiceServicer):
 
-    def Chat(self, request_iterator, context):
+    def Chat(self, request_iterator):
         """
         Esta é uma chamada do tipo de fluxo de resposta. Isso significa que o servidor pode continuar enviando mensagens
         Todo cliente abre essa conexão e espera o servidor enviar novas mensagens

@@ -16,6 +16,7 @@ class ClienteChat:
         self.exibir_mensagem_callback = exibir_mensagem_callback
         self.canal = grpc.insecure_channel(address + ":" + str(port))
         self.stub = chat_pb2_grpc.ChatServiceStub(self.canal)
+        
         self.fila_envio = []
         self.ativo = True
         self.client_id = str(uuid.uuid4())
