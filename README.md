@@ -35,6 +35,17 @@ python -m grpc_tools.protoc -Iproto \
     proto/chat.proto
 ```
 
+### O que esse comando está fazendo?
+
+| Parte do comando                                | Explicação                                                                                                           |
+|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `python -m grpc_tools.protoc`                   | Executa o compilador `protoc` (Protocol Buffers) via o módulo `grpc_tools` em Python.                                |
+| `-I .`                                          | Diz ao `protoc` onde procurar os arquivos `.proto`. Aqui, o ponto `.` significa "**procure na pasta atual**".         |
+| `--python_out=.`                                | Gera o código Python **relacionado às mensagens definidas** no `.proto` e salva na pasta atual (`.`).                |
+| `--grpc_python_out=.`                           | Gera o código Python **relacionado aos serviços gRPC (client/server stubs)** e salva na pasta atual.                 |
+| `chat.proto`                                    | O arquivo `.proto` que será processado.                                                                              |
+
+
 ## 🐍 Passo 5: Executar o Servidor e o Cliente
 ### Iniciar o servidor:
 ```bash
