@@ -1,18 +1,38 @@
-# 🗨️ Guia para Executar o Projeto 
+<h1 align="center" style="font-weight: bold;">  💬 Chat gRPC </h1>
 
-## ✅ Pré-requisitos
+Este projeto é uma aplicação de chat em tempo real desenvolvida em Python, utilizando o framework gRPC para comunicação entre cliente e servidor. O objetivo é demonstrar como implementar uma comunicação eficiente e bidirecional entre processos distribuídos, com suporte a múltiplos clientes simultâneos.
+
+---
+
+## 📌 Visão Geral
+
+- **Tecnologias Utilizadas**:
+  - Python 3.6 ou superior
+  - gRPC com Protocol Buffers
+  - Interface gráfica com Tkinter
+- **Arquitetura**:
+  - Comunicação cliente-servidor baseada em gRPC
+  - Transmissão de mensagens em tempo real
+  - Suporte a múltiplos clientes conectados simultaneamente
+
+---
+
+
+## ⚙️ Pré-requisitos
 
 Antes de começar, certifique-se de ter instalado em sua máquina:
 
 - **Python 3.6 ou superior**  
 - **pip** (gerenciador de pacotes do Python) 
 
-Verifique se o Python e o Pip estão instalados:
+Verifique as versões instaladas:
 
 ```bash
 python --version
 pip --version
 ```
+
+## 🚀 Executando o Projeto
 
 ## 🛠️ Passo 1: Instalar as dependências
 
@@ -31,6 +51,8 @@ python server.py
 ```bash
 python client.py
 ```
+
+Uma interface gráfica será aberta, permitindo que você envie e receba mensagens em tempo real.
 
 # 🗨️ Guia para GERAR o Projeto 
 
