@@ -8,15 +8,15 @@ from datetime import datetime
 import proto.chat_pb2 as chat_pb2
 import proto.chat_pb2_grpc as chat_pb2_grpc
 
-address = "0.tcp.sa.ngrok.io"
-port = 18412
+address = "0.tcp.sa.ngrok.io:11872"
+port = 11872
 class ClienteChat:
     def __init__(self, nome_usuario, exibir_mensagem_callback):
         self.nome_usuario = nome_usuario
         self.exibir_mensagem_callback = exibir_mensagem_callback
-        self.canal = grpc.insecure_channel(address + ":" + str(port))
+        self.canal = grpc.insecure_channel(address)
         self.stub = chat_pb2_grpc.ChatServiceStub(self.canal)
-        
+
         self.fila_envio = []
         self.ativo = True
         self.client_id = str(uuid.uuid4())
@@ -92,7 +92,6 @@ class InterfaceChat:
         self.botao_enviar.pack(side=tk.LEFT, padx=(5, 10), pady=(0, 10))
 
     
-
         self.cliente = ClienteChat(self.nome_usuario, self.exibir_mensagem)
         self.cliente.iniciar_chat()
 
@@ -104,7 +103,7 @@ class InterfaceChat:
         self.area_chat.configure(state="disabled")
         self.area_chat.yview(tk.END)
 
-    def enviar_mensagem(self, evento=None):
+    def enviar_mensagem(self):
         texto = self.entrada_mensagem.get()
         if texto:
             self.cliente.enviar_mensagem(texto)

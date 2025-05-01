@@ -18,7 +18,7 @@ pip --version
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install grpcio grpcio-tools wheel
+python -m pip install grpcio grpcio-tools wheel tkinter
 ```
 
 

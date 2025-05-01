@@ -10,7 +10,7 @@ historico_mensagens = []
 
 class ServicoChat(rpc.ChatServiceServicer):
 
-    def Chat(self, request_iterator):
+    def Chat(self, request_iterator, context):
         """
         Esta é uma chamada do tipo de fluxo de resposta. Isso significa que o servidor pode continuar enviando mensagens
         Todo cliente abre essa conexão e espera o servidor enviar novas mensagens
